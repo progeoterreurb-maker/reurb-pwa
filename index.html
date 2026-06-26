@@ -9,6 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="REURB">
   <title>REURB Cadastro</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
@@ -16,7 +17,7 @@
     .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
     .screen.active { display: flex; }
 
-    .logo { font-size: 36px; font-weight: 800; color: #1a5276; letter-spacing: 2px; }
+    .logo     { font-size: 36px; font-weight: 800; color: #1a5276; letter-spacing: 2px; }
     .subtitle { color: #888; font-size: 13px; margin-top: 4px; margin-bottom: 40px; text-align: center; }
 
     /* ── PIN ── */
@@ -27,58 +28,77 @@
     .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; width: 260px; }
     .key { background: white; border: none; border-radius: 14px; height: 68px; font-size: 24px; font-weight: 600; color: #222; box-shadow: 0 2px 6px rgba(0,0,0,.1); cursor: pointer; transition: transform .1s, background .1s; }
     .key:active { transform: scale(.93); background: #e8f1fb; }
-    .key.del { font-size: 18px; color: #999; }
+    .key.del   { font-size: 18px; color: #999; }
     .key.blank { background: transparent; box-shadow: none; pointer-events: none; }
-
-    .pin-msg { margin-top: 18px; font-size: 14px; color: #e74c3c; min-height: 20px; }
+    .pin-msg   { margin-top: 18px; font-size: 14px; color: #e74c3c; min-height: 20px; }
 
     /* ── LOTE ── */
-    .card { background: white; border-radius: 20px; padding: 28px; width: 100%; max-width: 380px; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .card        { background: white; border-radius: 20px; padding: 28px; width: 100%; max-width: 380px; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
     .field-label { font-size: 13px; font-weight: 600; color: #666; margin-bottom: 8px; display: block; }
     .field-input { width: 100%; padding: 15px 16px; border: 2px solid #dde3ea; border-radius: 12px; font-size: 20px; font-weight: 600; outline: none; color: #222; transition: border-color .2s; }
     .field-input:focus { border-color: #1a5276; }
 
-    .btn { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; margin-top: 14px; }
-    .btn:active { transform: scale(.97); opacity: .88; }
-    .btn-blue { background: #1a5276; color: white; }
-    .btn-gray { background: #eaeef2; color: #555; }
-    .btn-red  { background: #e74c3c; color: white; }
+    .btn          { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: opacity .15s, transform .1s; margin-top: 14px; }
+    .btn:active   { transform: scale(.97); opacity: .88; }
+    .btn-blue     { background: #1a5276; color: white; }
+    .btn-gray     { background: #eaeef2; color: #555; }
+    .btn-red      { background: #e74c3c; color: white; }
     .btn:disabled { opacity: .45; pointer-events: none; }
-
-    .inline-msg { font-size: 13px; margin-top: 10px; min-height: 18px; color: #e74c3c; }
+    .inline-msg   { font-size: 13px; margin-top: 10px; min-height: 18px; color: #e74c3c; }
 
     /* ── FOTOS ── */
     #screen-fotos { justify-content: flex-start; padding: 0; }
-    .top-bar { background: #1a5276; color: white; padding: 18px 20px 14px; width: 100%; }
+    .top-bar    { background: #1a5276; color: white; padding: 18px 20px 14px; width: 100%; }
     .top-bar h2 { font-size: 20px; font-weight: 700; }
     .top-bar p  { font-size: 13px; opacity: .75; margin-top: 3px; }
 
     .fotos-body { width: 100%; max-width: 420px; padding: 18px 16px; flex: 1; display: flex; flex-direction: column; }
 
-    .counter-box { background: white; border-radius: 16px; padding: 22px; text-align: center; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+    .counter-box     { background: white; border-radius: 16px; padding: 22px; text-align: center; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
     .counter-box .num { font-size: 52px; font-weight: 800; color: #1a5276; line-height: 1; }
     .counter-box .lbl { font-size: 13px; color: #999; margin-top: 6px; }
 
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .grid  { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
     .thumb { aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: #e8ecf0; position: relative; }
     .thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .thumb .overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+
+    .overlay        { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .overlay.sending { background: rgba(255,255,255,.65); }
-    .overlay.ok      { background: rgba(39,174,96,.25); }
     .overlay.fail    { background: rgba(231,76,60,.25); }
 
-    .camera-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #1a5276; color: white; border-radius: 14px; padding: 20px; font-size: 17px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+    /* botão excluir na miniatura */
+    .thumb-del { position: absolute; top: 5px; right: 5px; width: 28px; height: 28px; background: rgba(231,76,60,.88); color: white; border: none; border-radius: 50%; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 5; line-height: 1; }
+    .thumb-del:active { opacity: .75; }
+
+    .camera-btn       { display: flex; align-items: center; justify-content: center; gap: 10px; background: #1a5276; color: white; border-radius: 14px; padding: 20px; font-size: 17px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
     .camera-btn:active { opacity: .85; }
 
-    .flash { border-radius: 10px; padding: 12px 16px; font-size: 14px; text-align: center; margin-bottom: 12px; }
-    .flash-ok  { background: #d5f5e3; color: #1e8449; }
-    .flash-err { background: #fde8e8; color: #c0392b; }
+    .flash      { border-radius: 10px; padding: 12px 16px; font-size: 14px; text-align: center; margin-bottom: 12px; }
+    .flash-ok   { background: #d5f5e3; color: #1e8449; }
+    .flash-err  { background: #fde8e8; color: #c0392b; }
 
     /* spinner */
     .spin { width: 22px; height: 22px; border: 3px solid #dde; border-top-color: #1a5276; border-radius: 50%; animation: rot .7s linear infinite; display: inline-block; }
     @keyframes rot { to { transform: rotate(360deg); } }
 
     .loading-row { display: flex; align-items: center; gap: 8px; color: #1a5276; font-size: 14px; padding: 10px 0; }
+
+    /* ── MODAL EDITOR ── */
+    #modal-editor { display: none; position: fixed; inset: 0; background: #111; z-index: 200; flex-direction: column; }
+
+    .editor-header { background: #1a5276; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .editor-header span { color: white; font-weight: 700; font-size: 16px; }
+    .editor-header button { background: none; border: none; color: white; font-size: 24px; cursor: pointer; line-height: 1; padding: 4px 8px; }
+
+    .editor-canvas-wrap { flex: 1; overflow: hidden; position: relative; }
+    .editor-canvas-wrap img { display: block; max-width: 100%; }
+
+    .editor-footer { background: #1a5276; padding: 12px 16px; display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-ed { flex: 1; padding: 14px 8px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: opacity .15s; }
+    .btn-ed:active { opacity: .8; }
+    .btn-ed-girar   { background: rgba(255,255,255,.18); color: white; }
+    .btn-ed-ok      { background: #27ae60; color: white; }
+    .btn-ed-loading { background: #27ae60; color: white; opacity: .6; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -89,12 +109,9 @@
   <div class="subtitle">Cadastro Social PROGEOTER</div>
 
   <div class="pin-dots">
-    <div class="dot" id="d0"></div>
-    <div class="dot" id="d1"></div>
-    <div class="dot" id="d2"></div>
-    <div class="dot" id="d3"></div>
-    <div class="dot" id="d4"></div>
-    <div class="dot" id="d5"></div>
+    <div class="dot" id="d0"></div><div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div><div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div><div class="dot" id="d5"></div>
   </div>
 
   <div class="keypad">
@@ -111,7 +128,6 @@
     <button class="key" onclick="tecla('0')">0</button>
     <button class="key del" onclick="apagar()">⌫</button>
   </div>
-
   <div class="pin-msg" id="pin-msg"></div>
 </div>
 
@@ -119,16 +135,13 @@
 <div id="screen-lote" class="screen">
   <div class="logo">REURB</div>
   <div class="subtitle">Novo cadastro</div>
-
   <div class="card">
     <label class="field-label" for="inp-lote">Número da quadra / lote</label>
     <input id="inp-lote" class="field-input" type="text" placeholder="Ex: Q 01 L 01" autocomplete="off" autocorrect="off">
-
     <div id="lote-loading" class="loading-row" style="display:none">
       <div class="spin"></div> Preparando pasta no Drive...
     </div>
     <div class="inline-msg" id="lote-msg"></div>
-
     <button class="btn btn-blue" id="btn-iniciar" onclick="iniciar()">Iniciar</button>
     <button class="btn btn-gray" onclick="irPin()">Sair</button>
   </div>
@@ -140,27 +153,39 @@
     <h2 id="fotos-titulo">—</h2>
     <p id="fotos-sub">Tire as fotos do lote</p>
   </div>
-
   <div class="fotos-body">
     <div class="counter-box">
       <div class="num" id="foto-num">0</div>
       <div class="lbl">foto(s) enviada(s) com sucesso</div>
     </div>
-
     <div id="grid-fotos" class="grid"></div>
     <div id="flash-area"></div>
-
     <label class="camera-btn">
       📷 Tirar foto
       <input type="file" id="inp-camera" accept="image/*" capture="environment"
              style="display:none" onchange="novaFoto(this)">
     </label>
-
     <button class="btn btn-red"  onclick="finalizar()">✅ Finalizar cadastro</button>
     <button class="btn btn-gray" onclick="cancelar()" style="margin-top:8px">Cancelar</button>
   </div>
 </div>
 
+<!-- ═══ MODAL EDITOR ═══ -->
+<div id="modal-editor">
+  <div class="editor-header">
+    <span>✂️ Enquadrar foto</span>
+    <button onclick="cancelarEditor()">✕</button>
+  </div>
+  <div class="editor-canvas-wrap">
+    <img id="editor-img" alt="foto">
+  </div>
+  <div class="editor-footer">
+    <button class="btn-ed btn-ed-girar" onclick="girar()">↻ Girar 90°</button>
+    <button class="btn-ed btn-ed-ok" id="btn-confirmar" onclick="confirmarEditor()">✓ Confirmar</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 <script>
 // ── Configuração ──────────────────────────────────────────────────
 const API_URL = 'https://script.google.com/macros/s/AKfycbxfIH5ArYM25c1g2TPq7qZA_06M8uPkXA1ifrPBiXlcJGj04Oyu26l-yFwjWOSMczVN/exec';
@@ -168,6 +193,7 @@ const PIN_OK  = '123456';
 
 // ── Estado ────────────────────────────────────────────────────────
 let pin = '', lote = '', folderId = '', nFotos = 0;
+let cropper = null;
 
 // ── Tela PIN ──────────────────────────────────────────────────────
 function tecla(n) {
@@ -206,22 +232,16 @@ async function iniciar() {
   if (!val) { msg('lote-msg', 'Digite o número da quadra/lote.'); return; }
   msg('lote-msg', '');
   setLoading(true);
-
   try {
     const nomePasta = 'Lote_' + val;
     const res = await api({ action: 'criar_pasta', nomePasta });
     if (res.error) throw new Error(res.error);
-
-    lote     = val;
-    folderId = res.folderId;
-    nFotos   = 0;
-
+    lote = val; folderId = res.folderId; nFotos = 0;
     document.getElementById('fotos-titulo').textContent = nomePasta;
     document.getElementById('fotos-sub').textContent    = 'Tire as fotos do lote';
     document.getElementById('foto-num').textContent     = '0';
     document.getElementById('grid-fotos').innerHTML     = '';
     document.getElementById('flash-area').innerHTML     = '';
-
     ir('screen-fotos');
   } catch(e) {
     msg('lote-msg', 'Erro: ' + e.message);
@@ -234,46 +254,125 @@ function setLoading(on) {
   document.getElementById('btn-iniciar').disabled = on;
 }
 
-// ── Tela Fotos ────────────────────────────────────────────────────
+// ── Captura da foto ───────────────────────────────────────────────
 async function novaFoto(input) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
   input.value = '';
+  // Pré-redimensionar para o editor (melhor desempenho no mobile)
+  const b64 = await redimensionar(file, 2000, 0.92);
+  abrirEditor(b64);
+}
 
-  const n       = ++nFotos;
-  const nome    = 'Foto_' + n + '.jpg';
-  const thumbEl = adicionarThumb(n);
+// ── Editor ────────────────────────────────────────────────────────
+function abrirEditor(b64) {
+  const modal = document.getElementById('modal-editor');
+  const imgEl = document.getElementById('editor-img');
+  modal.style.display = 'flex';
+  if (cropper) { cropper.destroy(); cropper = null; }
+  imgEl.src = 'data:image/jpeg;base64,' + b64;
+  imgEl.onload = () => {
+    cropper = new Cropper(imgEl, {
+      viewMode: 1,
+      autoCropArea: 0.92,
+      responsive: true,
+      guides: true,
+      movable: true,
+      zoomable: true,
+      rotatable: true,
+    });
+  };
+}
 
+function girar() {
+  if (cropper) cropper.rotate(90);
+}
+
+async function confirmarEditor() {
+  if (!cropper) return;
+  const btnOk = document.getElementById('btn-confirmar');
+  btnOk.className = 'btn-ed btn-ed-loading';
+  btnOk.textContent = '⏳ Enviando...';
   try {
-    const b64 = await comprimir(file);
-    thumbEl.querySelector('img').src = 'data:image/jpeg;base64,' + b64;
-    thumbEl.querySelector('.overlay').className = 'overlay sending';
-    thumbEl.querySelector('.overlay').innerHTML = '<div class="spin"></div>';
-
-    await api({ action: 'upload_foto', folderId, fileName: nome, fileData: b64 });
-
-    thumbEl.querySelector('.overlay').className = 'overlay ok';
-    thumbEl.querySelector('.overlay').textContent = '✓';
-    document.getElementById('foto-num').textContent = n;
-
-  } catch(e) {
-    thumbEl.querySelector('.overlay').className = 'overlay fail';
-    thumbEl.querySelector('.overlay').textContent = '✗';
-    nFotos--;
-    flash('err', 'Erro ao enviar. Tente novamente.');
+    const canvas = cropper.getCroppedCanvas({ maxWidth: 1280, maxHeight: 1280 });
+    const b64 = canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+    fecharEditor();
+    await fazerUpload(b64);
+  } finally {
+    btnOk.className = 'btn-ed btn-ed-ok';
+    btnOk.textContent = '✓ Confirmar';
   }
 }
 
-function adicionarThumb(n) {
+function cancelarEditor() {
+  fecharEditor();
+}
+
+function fecharEditor() {
+  if (cropper) { cropper.destroy(); cropper = null; }
+  document.getElementById('modal-editor').style.display = 'none';
+}
+
+// ── Upload ────────────────────────────────────────────────────────
+async function fazerUpload(b64) {
+  const n    = ++nFotos;
+  const nome = 'Foto_' + n + '.jpg';
+  const thumbEl = adicionarThumb(n, b64);
+
+  try {
+    const res = await api({ action: 'upload_foto', folderId, fileName: nome, fileData: b64 });
+    if (res.error) throw new Error(res.error);
+
+    // Remover spinner e adicionar botão excluir
+    const ov = thumbEl.querySelector('.overlay');
+    if (ov) ov.remove();
+
+    const del = document.createElement('button');
+    del.className = 'thumb-del';
+    del.title = 'Excluir foto';
+    del.textContent = '✕';
+    del.onclick = () => excluirFoto(thumbEl, res.fileId);
+    thumbEl.appendChild(del);
+
+    document.getElementById('foto-num').textContent = nFotos;
+  } catch(e) {
+    const ov = thumbEl.querySelector('.overlay');
+    if (ov) { ov.className = 'overlay fail'; ov.textContent = '✗'; }
+    nFotos--;
+    flash('err', 'Erro ao enviar. Tente tirar a foto novamente.');
+  }
+}
+
+function adicionarThumb(n, b64) {
   const grid = document.getElementById('grid-fotos');
   const div  = document.createElement('div');
   div.className = 'thumb';
   div.id = 'th' + n;
-  div.innerHTML = '<img><div class="overlay sending"><div class="spin"></div></div>';
+  const img = document.createElement('img');
+  img.src = 'data:image/jpeg;base64,' + b64;
+  const ov  = document.createElement('div');
+  ov.className = 'overlay sending';
+  ov.innerHTML = '<div class="spin"></div>';
+  div.appendChild(img);
+  div.appendChild(ov);
   grid.appendChild(div);
   return div;
 }
 
+async function excluirFoto(thumbEl, fileId) {
+  if (!confirm('Excluir esta foto do Drive?')) return;
+  try {
+    const res = await api({ action: 'deletar_foto', fileId });
+    if (res.error) throw new Error(res.error);
+    thumbEl.remove();
+    nFotos--;
+    document.getElementById('foto-num').textContent = nFotos;
+  } catch(e) {
+    flash('err', 'Erro ao excluir. Tente novamente.');
+  }
+}
+
+// ── Finalizar / Cancelar ──────────────────────────────────────────
 function finalizar() {
   if (nFotos === 0) { flash('err', 'Envie pelo menos uma foto.'); return; }
   flash('ok', `✅ Lote_${lote} concluído — ${nFotos} foto(s) enviada(s)!`);
@@ -282,36 +381,33 @@ function finalizar() {
     ir('screen-lote');
   }, 2600);
 }
-
 function cancelar() {
   if (nFotos > 0 && !confirm('Cancelar? As fotos já enviadas ficam no Drive.')) return;
   document.getElementById('inp-lote').value = '';
   ir('screen-lote');
 }
-
 function flash(tipo, txt) {
   const el = document.getElementById('flash-area');
   el.innerHTML = `<div class="flash flash-${tipo}">${txt}</div>`;
   if (tipo === 'ok') setTimeout(() => el.innerHTML = '', 3000);
 }
 
-// ── Compressão de imagem ──────────────────────────────────────────
-function comprimir(file) {
+// ── Compressão ────────────────────────────────────────────────────
+function redimensionar(file, maxSize, quality) {
   return new Promise(resolve => {
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 1280;
         let w = img.width, h = img.height;
-        if (w > MAX || h > MAX) {
-          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
-          else       { w = Math.round(w * MAX / h); h = MAX; }
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else       { w = Math.round(w * maxSize / h); h = maxSize; }
         }
         const c = document.createElement('canvas');
         c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
-        resolve(c.toDataURL('image/jpeg', 0.82).split(',')[1]);
+        resolve(c.toDataURL('image/jpeg', quality).split(',')[1]);
       };
       img.src = e.target.result;
     };
@@ -319,25 +415,22 @@ function comprimir(file) {
   });
 }
 
-// ── Chamada ao Apps Script ────────────────────────────────────────
+// ── Chamada API ───────────────────────────────────────────────────
 async function api(data) {
   const res = await fetch(API_URL, {
-    method:   'POST',
-    headers:  { 'Content-Type': 'text/plain' },
-    body:     JSON.stringify({ pin: PIN_OK, ...data }),
-    redirect: 'follow'
+    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ pin: PIN_OK, ...data }), redirect: 'follow'
   });
   return res.json();
 }
 
-// ── Utilidades ────────────────────────────────────────────────────
+// ── Utilitários ───────────────────────────────────────────────────
 function ir(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 function msg(id, txt) { document.getElementById(id).textContent = txt; }
 
-// Service Worker
 if ('serviceWorker' in navigator)
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 </script>
